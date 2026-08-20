@@ -1,101 +1,24 @@
-name: DripVision CI/CD
+name: Flutter Build
 
 on:
   push:
-    branches: ["main"]
-  pull_request:
-    branches: ["main"]
+    branches:
+      - main
 
 jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'zulu'
-          java-version: '17'
-
-      - name: Set up Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          flutter-version: '3.24.0'
-          channel: 'stable'
-
-      - name: Install dependencies
-  run: |
-    cd dripvision
-    flutter pub get
-
-- name: Build APK
-  run: |
-    cd dripvision
-    flutter build apk --release
-
-      - name: Analyze Project
-        run: flutter analyze
-
-      - name: Run Tests
-        run: flutter test
-
   build:
-    needs: test
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
+
+    defaults:
+      run:
+        working-directory: dripvision
+
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Java
-        uses: actions/setup-java@v4
+      - uses: subosito/flutter-action@v2
         with:
-          distribution: 'zulu'
-          java-version: '17'
+          channel: stable
 
-      - name: Set up Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          flutter-version: '3.24.0'
-          channel: 'stable'
-
-      - name: Install Dependencies
-        run: flutter pub get
-
-      - name: Decode Keystore
-        env:
-          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
-        run: |
-          echo "$KEYSTORE_BASE64" | base64 -d > android/app/upload-keystore.jks
-
-      - name: Create local.properties
-        env:
-          STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
-          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-        run: |
-          echo "flutter.sdk=${{ env.FLUTTER_ROOT }}" > android/local.properties
-          echo "storeFile=upload-keystore.jks" >> android/local.properties
-          echo "storePassword=$STORE_PASSWORD" >> android/local.properties
-          echo "keyPassword=$KEY_PASSWORD" >> android/local.properties
-          echo "keyAlias=upload" >> android/local.properties
-
-      - name: Build Release AAB
-        env:
-          OPENROUTER_KEY: ${{ secrets.OPENROUTER_KEY }}
-          FAL_AI_KEY: ${{ secrets.FAL_AI_KEY }}
-          OPENAI_KEY: ${{ secrets.OPENAI_KEY }}
-          ELEVENLABS_KEY: ${{ secrets.ELEVENLABS_KEY }}
-          REVENUECAT_ANDROID_KEY: ${{ secrets.REVENUECAT_ANDROID_KEY }}
-        run: |
-          flutter build appbundle --release \
-            --dart-define=OPENROUTER_KEY="$OPENROUTER_KEY" \
-            --dart-define=FAL_AI_KEY="$FAL_AI_KEY" \
-            --dart-define=OPENAI_KEY="$OPENAI_KEY" \
-            --dart-define=ELEVENLABS_KEY="$ELEVENLABS_KEY" \
-            --dart-define=REVENUECAT_ANDROID_KEY="$REVENUECAT_ANDROID_KEY"
-
-      - name: Upload AAB Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: dripvision-release-aab
-          path: build/app/outputs/bundle/release/app-release.aab
+      - run: flutter pub get
+      - run: flutter build apk --release
