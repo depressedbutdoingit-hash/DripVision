@@ -44,15 +44,18 @@ android {
         multiDexEnabled true
     }
 
+    // ✅ ONLY debug signing (CI safe)
     signingConfigs {
-        debug {
-            // default debug keystore (auto provided)
-        }
+        debug {}
     }
 
     buildTypes {
+        debug {
+            signingConfig signingConfigs.debug
+        }
+
         release {
-            // 🔥 FIX: use debug signing so CI doesn't crash
+            // 🔥 FORCE debug signing so CI doesn't crash
             signingConfig signingConfigs.debug
 
             minifyEnabled true
@@ -60,14 +63,10 @@ android {
 
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
 
-            // 🔥 disable crashlytics mapping upload (needs credentials)
+            // 🔥 Disable Crashlytics upload (needs credentials)
             firebaseCrashlytics {
                 mappingFileUploadEnabled false
             }
-        }
-
-        debug {
-            signingConfig signingConfigs.debug
         }
     }
 }
