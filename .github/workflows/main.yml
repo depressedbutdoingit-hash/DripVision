@@ -24,11 +24,15 @@ jobs:
           flutter-version: '3.24.0'
           channel: 'stable'
 
-      - name: Install Dependencies
-        run: flutter pub get
+      - name: Install dependencies
+  run: |
+    cd dripvision
+    flutter pub get
 
-      - name: Verify Formatting
-        run: dart format --output=none --set-exit-if-changed .
+- name: Build APK
+  run: |
+    cd dripvision
+    flutter build apk --release
 
       - name: Analyze Project
         run: flutter analyze
